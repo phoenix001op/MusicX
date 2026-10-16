@@ -157,10 +157,10 @@
     return p;
   }
 
-  let source = 'full'; // 'full' = Audius, 'preview' = iTunes 30s clips
-  try { source = localStorage.getItem('musicx:src') || 'full'; } catch { /* ignore */ }
-  const fetchTracks = (term, limit = 20) =>
-    source === 'full' ? fetchAudius(term, limit) : fetchItunes(term, limit);
+  // Always use Audius for full-length, streamable tracks. Preview-only catalogs
+  // such as iTunes must not silently become the active source after a reload.
+  const source = 'full';
+  const fetchTracks = (term, limit = 20) => fetchAudius(term, limit);
 
   // ---------- home content ----------
   const SHELVES = [
@@ -884,13 +884,13 @@
   $('#newPlaylistSide').addEventListener('click', newPlaylistDialog);
 
   const srcBtn = $('#srcBtn');
-  const paintSrc = () => { srcBtn.textContent = source === 'full' ? 'Full songs' : '30s previews'; };
+  const paintSrc = () => {
+    srcBtn.textContent = 'Full-length tracks';
+    srcBtn.title = 'MusicX uses Audius for full-length tracks. Popular commercial songs may not be available.';
+    srcBtn.setAttribute('aria-label', srcBtn.title);
+  };
   srcBtn.addEventListener('click', () => {
-    source = source === 'full' ? 'preview' : 'full';
-    try { localStorage.setItem('musicx:src', source); } catch { /* ignore */ }
-    paintSrc();
-    toast(source === 'full' ? 'Full songs (independent artists)' : '30s previews (mainstream hits)');
-    route();
+    toast('Full-length tracks use Audius. Commercial hits may only be available as previews on other services.');
   });
 
   // ---------- start ----------
