@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#030303">
+  <meta name="description" content="MusicX - listen to Bollywood, Hollywood and every kind of song online. Make playlists as a guest.">
+  <title>MusicX</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%23ff2d3d'/><path d='M13 10v12l10-6z' fill='white'/></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <aside class="sidebar" id="sidebar">
+    <a class="logo" href="#/home" aria-label="MusicX home">
+      <span class="logo-mark"><svg viewBox="0 0 24 24" width="16" height="16"><path fill="#fff" d="M8 5v14l11-7z"/></svg></span>
+      <span class="logo-text">Music<b>X</b></span>
+    </a>
+
+    <nav class="nav">
+      <a href="#/home" data-nav="home"><span data-icon="home"></span>Home</a>
+      <a href="#/search" data-nav="search"><span data-icon="search"></span>Search</a>
+      <a href="#/library" data-nav="library"><span data-icon="library"></span>Library</a>
+    </nav>
+
+    <div class="side-section">
+      <div class="side-head">
+        <span>Playlists</span>
+        <button class="icon-btn small" id="newPlaylistSide" title="New playlist" aria-label="New playlist"><span data-icon="plus"></span></button>
+      </div>
+      <a class="side-link" href="#/liked"><span data-icon="heart"></span>Liked songs</a>
+      <div id="sidePlaylists"></div>
+    </div>
+  </aside>
+
+  <div class="main-wrap">
+    <header class="topbar">
+      <form class="search-box" id="searchForm" role="search" autocomplete="off">
+        <span data-icon="search"></span>
+        <input id="searchInput" type="search" placeholder="Search songs, artists, albums" aria-label="Search">
+      </form>
+      <button class="avatar" id="userBtn" aria-label="Account"><span id="avatarLetter">G</span></button>
+    </header>
+
+    <main id="view" class="view"></main>
+  </div>
+
+  <!-- bottom mobile nav -->
+  <nav class="bottom-nav">
+    <a href="#/home" data-nav="home"><span data-icon="home"></span>Home</a>
+    <a href="#/search" data-nav="search"><span data-icon="search"></span>Search</a>
+    <a href="#/library" data-nav="library"><span data-icon="library"></span>Library</a>
+  </nav>
+
+  <!-- player -->
+  <footer class="player" id="player" hidden>
+    <input type="range" class="seek" id="seek" min="0" max="1000" value="0" aria-label="Seek">
+
+    <div class="p-left">
+      <div class="p-controls">
+        <button class="icon-btn" id="prevBtn" aria-label="Previous"><span data-icon="prev"></span></button>
+        <button class="icon-btn big" id="playBtn" aria-label="Play"><span data-icon="play"></span></button>
+        <button class="icon-btn" id="nextBtn" aria-label="Next"><span data-icon="next"></span></button>
+      </div>
+      <span class="p-time" id="timeLabel">0:00 / 0:30</span>
+    </div>
+
+    <div class="p-mid">
+      <img id="pArt" class="p-art" alt="">
+      <div class="p-meta">
+        <div class="p-title" id="pTitle"></div>
+        <div class="p-artist" id="pArtist"></div>
+      </div>
+    </div>
+
+    <div class="p-right">
+      <button class="icon-btn" id="pLike" aria-label="Like"><span data-icon="heart"></span></button>
+      <button class="icon-btn" id="pAdd" aria-label="Add to playlist"><span data-icon="addlist"></span></button>
+      <button class="icon-btn" id="shuffleBtn" aria-label="Shuffle"><span data-icon="shuffle"></span></button>
+      <button class="icon-btn" id="repeatBtn" aria-label="Repeat"><span data-icon="repeat"></span></button>
+      <div class="vol">
+        <span data-icon="volume"></span>
+        <input type="range" id="volume" min="0" max="100" value="80" aria-label="Volume">
+      </div>
+    </div>
+  </footer>
+
+  <dialog id="dlg"></dialog>
+  <div id="toast" class="toast" role="status"></div>
+
+  <audio id="audio" preload="none"></audio>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
