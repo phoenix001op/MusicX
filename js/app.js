@@ -1,6 +1,5 @@
 /* MusicX
- * Music data: iTunes Search API (https://itunes.apple.com/search), no key needed.
- * The API gives 30 second previews, so every song plays a short clip.
+ * Music data: Audius API (full songs) and iTunes Search API (30s previews), no keys needed.
  * Guest data (playlists, likes) lives in localStorage on this browser only.
  */
 (() => {
@@ -105,8 +104,8 @@
     return out;
   }
 
-  function fetchTracks(term, limit = 20) {
-    const key = term + '|' + limit;
+  function fetchItunes(term, limit = 20) {
+    const key = 'i|' + term + '|' + limit;
     if (cache.has(key)) return cache.get(key);
     const params = new URLSearchParams({
       term, media: 'music', entity: 'song', limit: String(limit), country: 'IN'
@@ -121,6 +120,47 @@
     p.catch(() => cache.delete(key));
     return p;
   }
+
+  // Full songs: Audius (free, no key). Mostly independent artists, full length.
+  let hostP = null;
+  function getHost() {
+    if (!hostP) {
+      hostP = fetch('https://api.audius.co').then(r => r.json()).then(d => {
+        const l = d.data || [];
+        if (!l.length) throw new Error('no host');
+        return l[Math.floor(Math.random() * l.length)];
+      });
+      hostP.catch(() => { hostP = null; });
+    }
+    return hostP;
+  }
+
+  function fetchAudius(term, limit = 20) {
+    const key = 'a|' + term + '|' + limit;
+    if (cache.has(key)) return cache.get(key);
+    const p = getHost()
+      .then(h => fetch(h + '/v1/tracks/search?' + new URLSearchParams({ query: term, limit: String(limit), app_name: 'MusicX' })))
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(d => (d.data || [])
+        .filter(t => t.is_streamable !== false && t.duration > 30)
+        .map(t => ({
+          id: t.id,
+          title: t.title,
+          artist: (t.user && t.user.name) || 'Unknown',
+          album: t.genre || '',
+          art: (t.artwork && (t.artwork['480x480'] || t.artwork['150x150'])) || '',
+          audius: true,
+          duration: t.duration
+        })));
+    cache.set(key, p);
+    p.catch(() => { cache.delete(key); hostP = null; });
+    return p;
+  }
+
+  let source = 'full'; // 'full' = Audius, 'preview' = iTunes 30s clips
+  try { source = localStorage.getItem('musicx:src') || 'full'; } catch { /* ignore */ }
+  const fetchTracks = (term, limit = 20) =>
+    source === 'full' ? fetchAudius(term, limit) : fetchItunes(term, limit);
 
   // ---------- home content ----------
   const SHELVES = [
@@ -317,19 +357,26 @@
     loadCurrent(true);
   }
 
+  async function srcFor(t) {
+    if (!t.audius) return t.preview;
+    const h = await getHost();
+    return h + '/v1/tracks/' + t.id + '/stream?app_name=MusicX';
+  }
+
   function loadCurrent(autoplay) {
     const t = cur();
     if (!t) return;
-    audio.src = t.preview;
     player.hidden = false;
     $('#pArt').src = t.art;
     $('#pTitle').textContent = t.title;
     $('#pArtist').textContent = t.artist;
     document.title = t.title + ' - MusicX';
     updateLikeBtn();
-    if (autoplay) {
-      audio.play().catch(() => toast('Tap play to start the song'));
-    }
+    srcFor(t).then(src => {
+      if (cur() !== t) return;
+      audio.src = src;
+      if (autoplay) audio.play().catch(() => toast('Tap play to start the song'));
+    }).catch(() => toast('Could not load this song'));
     markPlaying();
     setMediaSession(t);
   }
@@ -501,7 +548,7 @@
       likeBtn,
       el('button', { class: 'icon-btn small', 'aria-label': 'Add to playlist', title: 'Add to playlist', html: icon('addlist', 20), onclick: e => { e.stopPropagation(); pickPlaylist(t); } }),
       opts.onRemove && el('button', { class: 'icon-btn small', 'aria-label': 'Remove', title: 'Remove from this playlist', html: icon('trash', 20), onclick: e => { e.stopPropagation(); opts.onRemove(t); } }),
-      el('span', { class: 'dur' }, '0:30'));
+      el('span', { class: 'dur' }, fmt(t.duration)));
 
     const row = el('div', { class: 'row', 'data-track': t.id },
       el('div', { class: 'row-art' }, artImg(t), el('div', { class: 'overlay', html: icon('play', 24) })),
@@ -836,7 +883,18 @@
   $('#userBtn').addEventListener('click', accountDialog);
   $('#newPlaylistSide').addEventListener('click', newPlaylistDialog);
 
+  const srcBtn = $('#srcBtn');
+  const paintSrc = () => { srcBtn.textContent = source === 'full' ? 'Full songs' : '30s previews'; };
+  srcBtn.addEventListener('click', () => {
+    source = source === 'full' ? 'preview' : 'full';
+    try { localStorage.setItem('musicx:src', source); } catch { /* ignore */ }
+    paintSrc();
+    toast(source === 'full' ? 'Full songs (independent artists)' : '30s previews (mainstream hits)');
+    route();
+  });
+
   // ---------- start ----------
+  paintSrc();
   paintIcons();
   setPlayIcon();
   updateAvatar();

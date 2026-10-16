@@ -17,9 +17,12 @@ Plain HTML, CSS and JavaScript. No build step, no npm, no framework.
 
 ## Music data
 
-Songs come from the free [iTunes Search API](https://developer.apple.com/library/archive/documentation/AudioVideo/Conceptual/iTuneSearchAPI/index.html), which is listed in the Music section of [public-apis](https://github.com/public-apis/public-apis#music). It needs no API key.
+Two free sources, no API keys. Use the button at the top right to switch:
 
-Important limit: the API only provides **30 second previews**, not full songs. That is how the API works, not a bug in the app. If you want full-length playback later, the API source in `js/app.js` (`fetchTracks`) can be swapped for a service that allows it, for example Jamendo (free, independent music) or by integrating a licensed streaming SDK.
+- **Full songs** (default): [Audius](https://docs.audius.org/api) streams complete tracks, but it is mostly independent artists, so big Bollywood/Hollywood hits are limited.
+- **30s previews**: the [iTunes Search API](https://developer.apple.com/library/archive/documentation/AudioVideo/Conceptual/iTuneSearchAPI/index.html) has mainstream hits, but only 30 second clips.
+
+Free APIs do not give full-length mainstream songs, because those are licensed. For that you need a paid streaming SDK.
 
 ## Run it locally
 

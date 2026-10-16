@@ -512,3 +512,14 @@ dialog[open] { display: flex; flex-direction: column; }
   }
   .bottom-nav a.active { color: #fff; }
 }
+
+.src-btn {
+  margin-left: auto;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  border: 1px solid #555;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.src-btn:hover { background: var(--surface-2); }
