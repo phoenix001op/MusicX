@@ -480,7 +480,7 @@
     paintSeek(seek.value / 10);
   });
   seek.addEventListener('change', () => {
-    const d = audio.duration || 30;
+    const d = Number.isFinite(audio.duration) ? audio.duration : 0;
     audio.currentTime = (seek.value / 1000) * d;
     seeking = false;
   });
