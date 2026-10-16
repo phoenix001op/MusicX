@@ -157,17 +157,18 @@
     return p;
   }
 
-  // Jamendo's published test client ID is for read-API testing only.
-  // Register your own app at https://devportal.jamendo.com/ before production use.
-  const JAMENDO_CLIENT_ID = '709fa152';
+  // Jamendo requires a client_id. Get a free one at https://devportal.jamendo.com/
+  // and paste it here. Leave blank to keep MusicX working with Audius alone.
+  const JAMENDO_CLIENT_ID = '';
 
   function fetchJamendo(term, limit = 20) {
+    if (!JAMENDO_CLIENT_ID) return Promise.resolve([]);
     const key = 'j|' + term + '|' + limit;
     if (cache.has(key)) return cache.get(key);
     const params = new URLSearchParams({
       client_id: JAMENDO_CLIENT_ID,
       format: 'json',
-      search: term,
+      namesearch: term,
       limit: String(limit),
       imagesize: '400',
       audioformat: 'mp32',
