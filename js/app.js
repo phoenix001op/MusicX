@@ -459,7 +459,7 @@
   }
 
   audio.addEventListener('timeupdate', () => {
-    const d = audio.duration || 30;
+    const d = Number.isFinite(audio.duration) ? audio.duration : 0;
     if (!seeking) {
       seek.value = Math.round((audio.currentTime / d) * 1000);
       paintSeek((audio.currentTime / d) * 100);
