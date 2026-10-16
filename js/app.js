@@ -157,10 +157,70 @@
     return p;
   }
 
-  // Always use Audius for full-length, streamable tracks. Preview-only catalogs
-  // such as iTunes must not silently become the active source after a reload.
-  const source = 'full';
-  const fetchTracks = (term, limit = 20) => fetchAudius(term, limit);
+  // Jamendo's published test client ID is for read-API testing only.
+  // Register your own app at https://devportal.jamendo.com/ before production use.
+  const JAMENDO_CLIENT_ID = '709fa152';
+
+  function fetchJamendo(term, limit = 20) {
+    const key = 'j|' + term + '|' + limit;
+    if (cache.has(key)) return cache.get(key);
+    const params = new URLSearchParams({
+      client_id: JAMENDO_CLIENT_ID,
+      format: 'json',
+      search: term,
+      limit: String(limit),
+      imagesize: '400',
+      audioformat: 'mp32',
+      type: 'single albumtrack'
+    });
+    const p = fetch('https://api.jamendo.com/v3.0/tracks/?' + params)
+      .then(r => {
+        if (!r.ok) throw new Error('Jamendo HTTP ' + r.status);
+        return r.json();
+      })
+      .then(d => {
+        if (d.headers && d.headers.status !== 'success') {
+          throw new Error(d.headers.error_message || 'Jamendo API error');
+        }
+        return (d.results || [])
+          .filter(t => t.audio && t.id)
+          .map(t => ({
+            id: 'jamendo:' + t.id,
+            title: t.name || 'Unknown track',
+            artist: t.artist_name || 'Unknown artist',
+            album: t.album_name || '',
+            art: t.image || t.album_image || '',
+            audio: t.audio,
+            jamendo: true,
+            duration: Number(t.duration) || 0
+          }));
+      });
+    cache.set(key, p);
+    p.catch(() => cache.delete(key));
+    return p;
+  }
+
+  // Search both free catalogs and interleave their results. If one API is
+  // temporarily unavailable, keep the other catalog working.
+  async function fetchTracks(term, limit = 20) {
+    const results = await Promise.allSettled([
+      fetchAudius(term, limit),
+      fetchJamendo(term, limit)
+    ]);
+    const audius = results[0].status === 'fulfilled' ? results[0].value : [];
+    const jamendo = results[1].status === 'fulfilled' ? results[1].value : [];
+    if (!audius.length && !jamendo.length &&
+        results.every(r => r.status === 'rejected')) {
+      throw new Error('All music APIs failed');
+    }
+    const merged = [];
+    const count = Math.max(audius.length, jamendo.length);
+    for (let i = 0; i < count; i++) {
+      if (audius[i]) merged.push(audius[i]);
+      if (jamendo[i]) merged.push(jamendo[i]);
+    }
+    return merged.slice(0, limit);
+  }
 
   // ---------- home content ----------
   const SHELVES = [
@@ -358,6 +418,7 @@
   }
 
   async function srcFor(t) {
+    if (t.jamendo) return t.audio;
     if (!t.audius) return t.preview;
     const h = await getHost();
     return h + '/v1/tracks/' + t.id + '/stream?app_name=MusicX';
@@ -885,12 +946,12 @@
 
   const srcBtn = $('#srcBtn');
   const paintSrc = () => {
-    srcBtn.textContent = 'Full-length tracks';
-    srcBtn.title = 'MusicX uses Audius for full-length tracks. Popular commercial songs may not be available.';
+    srcBtn.textContent = 'Audius + Jamendo';
+    srcBtn.title = 'Searches two free music catalogs: Audius and Jamendo. Popular commercial hits may still be unavailable.';
     srcBtn.setAttribute('aria-label', srcBtn.title);
   };
   srcBtn.addEventListener('click', () => {
-    toast('Full-length tracks use Audius. Commercial hits may only be available as previews on other services.');
+    toast('MusicX searches Audius + Jamendo. Both mainly offer independent music.');
   });
 
   // ---------- start ----------
