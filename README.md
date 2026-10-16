@@ -17,12 +17,14 @@ Plain HTML, CSS and JavaScript. No build step, no npm, no framework.
 
 ## Music data
 
-Two free sources, no API keys. Use the button at the top right to switch:
+MusicX searches two free music catalogs together and mixes their results:
 
-- **Full songs** (default): [Audius](https://docs.audius.org/api) streams complete tracks, but it is mostly independent artists, so big Bollywood/Hollywood hits are limited.
-- **30s previews**: the [iTunes Search API](https://developer.apple.com/library/archive/documentation/AudioVideo/Conceptual/iTuneSearchAPI/index.html) has mainstream hits, but only 30 second clips.
+- **[Audius](https://docs.audius.org/api)** — streams full-length tracks, with a catalog focused mostly on independent artists.
+- **[Jamendo](https://developer.jamendo.com/v3.0/docs)** — adds another catalog of independent music and returns playable stream URLs through its tracks API.
 
-Free APIs do not give full-length mainstream songs, because those are licensed. For that you need a paid streaming SDK.
+The app currently uses Jamendo's published test client ID for read-API testing. Before public/production use, register your own application at the [Jamendo Developer Portal](https://devportal.jamendo.com/) and replace `JAMENDO_CLIENT_ID` in `js/app.js`. The test ID is not intended as a production credential.
+
+Both catalogs can play full tracks where streaming is available, but neither guarantees the latest commercial Bollywood/Hollywood songs. MusicX does not extract audio from video sites or bypass music licensing.
 
 ## Run it locally
 
